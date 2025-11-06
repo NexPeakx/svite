@@ -8,5 +8,10 @@
   "scripts": {
     "dev": "rimraf dist && rollup -c --config-dev --watch",
     "build": "rimraf dist && rollup -c"
+  },
+  "dependencies": {
+    "@types/connect": "^3.4.38",
+    "cac": "^6.7.14",
+    "connect": "^3.7.0"
   }
 }
