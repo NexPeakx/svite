@@ -1,52 +1,95 @@
 import path from "node:path";
-import fs from 'node:fs'
-import { DEFAULT_CONFIG_FILES } from "./constants"
-import { isFileESM } from './utils'
+import fs from "node:fs";
+import { promisify } from "node:util";
+import { DEFAULT_CONFIG_FILES } from "./constants";
+import { isFileESM } from "./utils";
+import { createRequire } from "node:module";
 
-const configDefault = {
-  base: '/',
-  publicDir: 'public',
-  plugins: [],
-  appType: 'spa',
-  dev: {
+// 将 fs.readFile 函数转为 promise 函数
+const promisifyReadFile = promisify(fs.realpath);
 
-  }
+const _require = createRequire(import.meta.url);
+
+interface UserConfigExport {
+  /**
+   * 根目录
+   * @default process.cwd()
+   */
+  root?: string;
+  /*
+   * 基础路径
+   * @default '/'
+   */
+  base?: string;
+  /**
+   * 静态资源目录
+   * @default 'public'
+   */
+  publicDir?: string;
+  /**
+   * 运行模式
+   * @default 'development'
+   */
+  mode?: string;
+  /**
+   * 应用类型
+   * @default 'spa'
+   */
+  appType?: "spa" | "mpa";
 }
 
+const configDefault = {
+  base: "/",
+  publicDir: "public",
+  plugins: [],
+  appType: "spa",
+  dev: {},
+};
+
+export function defineConfig(config: UserConfigExport): UserConfigExport {
+  return config;
+}
 
 // 合并配置文件
 export function resolveConfig(config: Object) {
-  loadConfigFromFiles()
+  loadConfigFromFiles();
 }
 
 // 加载本地配置
-function loadConfigFromFiles(
-  configRoot: string = process.cwd()
-) {
+async function loadConfigFromFiles(configRoot: string = process.cwd()) {
   // 获取配置文件
-  let resolvePath: string | undefined
+  let resolvePath: string | undefined;
   for (const file of DEFAULT_CONFIG_FILES) {
-    const filePath = path.resolve(configRoot, file)
-    console.log('resolved config file path', resolvePath);
-    if (!fs.existsSync(filePath)) continue
-    resolvePath = filePath
-    break
+    const filePath = path.resolve(configRoot, file);
+    console.log("resolved config file path", resolvePath);
+    if (!fs.existsSync(filePath)) continue;
+    resolvePath = filePath;
+    break;
   }
-  console.log('final resolved config file path', resolvePath);
+  console.log("final resolved config file path", resolvePath);
   if (!resolvePath) {
-    throw new Error('No svite config file found')
+    throw new Error("No svite config file found");
   }
 
-  const resolver = isFileESM(resolvePath) ? ESMFileResolver(resolvePath) : null
-
-  if (!resolver) {
-    throw new Error('Only ESM config files are supported for now')
-  }
-
-
-
+  const userConfig = isFileESM(resolvePath)
+    ? resolveESMConfig(resolvePath)
+    : await resolveCJSConfig(resolvePath);
 }
 
-function ESMFileResolver(filePath: string) {
+function resolveESMConfig(filePath: string) {}
 
+async function resolveCJSConfig(filePath: string) {
+  const extension = path.extname(filePath);
+
+  const realFileName = await promisifyReadFile(filePath);
+
+  console.log(
+    "resolved config file",
+    _require.extensions,
+    realFileName,
+    filePath
+  );
+
+  // const row = _require(filePath).default;
+  // console.log("resolved config file", realFileName, extension, row);
 }

@@ -12,6 +12,7 @@
   "dependencies": {
     "@types/connect": "^3.4.38",
     "cac": "^6.7.14",
-    "connect": "^3.7.0"
+    "connect": "^3.7.0",
+    "esbuild": "^0.25.12"
   }
 }
