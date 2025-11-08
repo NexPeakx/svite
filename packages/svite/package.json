@@ -5,6 +5,11 @@
   "bin": {
     "svite": "./bin/svite.js"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "scripts": {
     "dev": "rimraf dist && rollup -c --config-dev --watch",
     "build": "rimraf dist && rollup -c"

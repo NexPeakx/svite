@@ -1,14 +1,11 @@
 import path from "node:path";
 import fs from "node:fs";
-import { promisify } from "node:util";
+import fsp from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 import { DEFAULT_CONFIG_FILES } from "./constants";
 import { isFileESM } from "./utils";
-import { createRequire } from "node:module";
-
-// 将 fs.readFile 函数转为 promise 函数
-const promisifyReadFile = promisify(fs.realpath);
-
-const _require = createRequire(import.meta.url);
+import { findNearestNodeModules } from "./packages";
+import { build } from "esbuild";
 
 interface UserConfigExport {
   /**
@@ -71,25 +68,59 @@ async function loadConfigFromFiles(configRoot: string = process.cwd()) {
     throw new Error("No svite config file found");
   }
 
-  const userConfig = isFileESM(resolvePath)
-    ? resolveESMConfig(resolvePath)
-    : await resolveCJSConfig(resolvePath);
+  const userConfig = (await loadConfigFile(resolvePath)).default;
+
+  console.log("resolved config", userConfig);
 }
 
-function resolveESMConfig(filePath: string) {}
+async function loadConfigFile(fileName: string) {
+  let nodeModuleDir = findNearestNodeModules(path.dirname(fileName));
 
-async function resolveCJSConfig(filePath: string) {
-  const extension = path.extname(filePath);
+  // 创建临时目录
+  if (nodeModuleDir) {
+    try {
+      await fsp.mkdir(path.resolve(nodeModuleDir, ".svite-temp/"), {
+        recursive: true,
+      });
+    } catch (error) {
+      nodeModuleDir = null;
+      throw error;
+    }
+  }
 
-  const realFileName = await promisifyReadFile(filePath);
+  // 创建临时文件，用于node加载，因为node的ES模块系统要求通过有效的url加载，不能直接执行字符串代码
+  const hash = `timestamp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const ext = isFileESM(fileName) ? ".mjs" : ".cjs";
+  const tempFileName = nodeModuleDir
+    ? path.resolve(
+        nodeModuleDir,
+        `.svite-temp/${path.basename(fileName)}.${hash}${ext}`
+      )
+    : `${fileName}.${hash}${ext}`;
 
-  console.log(
-    "resolved config file",
-    _require.extensions,
-    realFileName,
-    filePath
-  );
+  console.log("resolved config file", tempFileName);
 
-  // const row = _require(filePath).default;
-  // console.log("resolved config file", realFileName, extension, row);
+  const bundleCode = await bundleConfigFile(fileName, isFileESM(fileName));
+
+  await fsp.writeFile(tempFileName, bundleCode);
+
+  try {
+    return (await import(pathToFileURL(tempFileName).href)).default;
+  } finally {
+    fs.unlink(tempFileName, () => {});
+  }
+}
+
+async function bundleConfigFile(fileName: string, isESM: boolean) {
+  const result = await build({
+    entryPoints: [fileName],
+    target: `node${process.versions.node}`,
+    format: isESM ? "esm" : "cjs",
+    platform: "node",
+    bundle: true,
+    write: false,
+    external: ["esbuild"],
+  });
+  const { text } = result.outputFiles[0];
+  return text;
 }
