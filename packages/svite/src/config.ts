@@ -56,11 +56,24 @@ export function defineConfig(config: UserConfigExport): UserConfigExport {
   return config;
 }
 
-// 合并配置文件
-export function resolveConfig(config: Object) {
-  loadConfigFromFiles();
+// 解析配置
+export async function resolveConfig(inlineConfig: Object) {
+  const userConfig = await loadConfigFromFiles();
+
+  const resolvedConfig = mergeConfig(
+    configDefault,
+    userConfig,
+    inlineConfig,
+  )
 }
 
+function mergeConfig(
+  config: Object,
+  userConfig: Object,
+  inlineConfig: Object,
+) {
+  return Object.assign(config, userConfig, inlineConfig);
+}
 // 加载本地配置
 async function loadConfigFromFiles(configRoot: string = process.cwd()) {
   // 获取配置文件
@@ -86,6 +99,8 @@ async function loadConfigFromFiles(configRoot: string = process.cwd()) {
       : userConfigExport;
 
   console.log("resolved config", userConfig);
+
+  return userConfig
 }
 
 async function loadConfigFile(fileName: string) {
