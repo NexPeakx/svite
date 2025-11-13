@@ -13,43 +13,34 @@ export interface ConfigEnv {
 }
 
 export interface UserConfig {
-  /**
-   * 根目录
-   * @default process.cwd()
-   */
-  root?: string;
-  /*
-   * 基础路径
-   * @default '/'
-   */
-  base?: string;
-  /**
-   * 静态资源目录
-   * @default 'public'
-   */
-  publicDir?: string;
-  /**
-   * 运行模式
-   * @default 'development'
-   */
-  mode?: string;
-  /**
-   * 应用类型
-   * @default 'spa'
-   */
-  appType?: "spa" | "mpa";
+  root?: string,
+  mode?: string,
+  define?: Record<string, any>
+  plugins?: any[],
+  publicDir?: string,
+  appType?: 'spa' | 'mpa',
+  server?: {
+    host?: string | boolean,
+    port?: number,
+    open?: boolean,
+  }
 }
 
 export type UserConfigFn = (env: ConfigEnv) => UserConfig | Promise<UserConfig>;
 
 export type UserConfigExport = UserConfig | Promise<UserConfig> | UserConfigFn;
 
-const configDefault = {
-  base: "/",
+const configDefault: UserConfig = {
+  root: process.cwd(),
+  mode: "development",
   publicDir: "public",
   plugins: [],
   appType: "spa",
-  dev: {},
+  server: {
+    host: false,
+    port: 5273,
+    open: true,
+  },
 };
 
 export function defineConfig(config: UserConfigExport): UserConfigExport {
@@ -65,14 +56,21 @@ export async function resolveConfig(inlineConfig: Object) {
     userConfig,
     inlineConfig,
   )
+
+  return resolvedConfig
 }
 
 function mergeConfig(
-  config: Object,
-  userConfig: Object,
-  inlineConfig: Object,
+  defaultConfig: UserConfig,
+  userConfig: UserConfig,
+  inlineConfig: UserConfig,
 ) {
-  return Object.assign(config, userConfig, inlineConfig);
+  console.log(
+    "defaultConfig", defaultConfig,
+    "userConfig", userConfig,
+    "inlineConfig", inlineConfig,
+  )
+  return Object.assign(defaultConfig, userConfig, inlineConfig);
 }
 // 加载本地配置
 async function loadConfigFromFiles(configRoot: string = process.cwd()) {
@@ -80,12 +78,10 @@ async function loadConfigFromFiles(configRoot: string = process.cwd()) {
   let resolvePath: string | undefined;
   for (const file of DEFAULT_CONFIG_FILES) {
     const filePath = path.resolve(configRoot, file);
-    console.log("resolved config file path", resolvePath);
     if (!fs.existsSync(filePath)) continue;
     resolvePath = filePath;
     break;
   }
-  console.log("final resolved config file path", resolvePath);
   if (!resolvePath) {
     throw new Error("No svite config file found");
   }
@@ -127,8 +123,6 @@ async function loadConfigFile(fileName: string) {
         `.svite-temp/${path.basename(fileName)}.${hash}${ext}`
       )
     : `${fileName}.${hash}${ext}`;
-
-  console.log("resolved config file", tempFileName);
 
   const bundleCode = await bundleConfigFile(fileName, isFileESM(fileName));
 
