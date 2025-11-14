@@ -20,6 +20,4 @@ export async function createDevServer(inlineCconfig: Object) {
   server.listen(3000, () => {
     console.log("Dev server running on http://localhost:3000");
   });
-
-  console.log("server created", config);
 }

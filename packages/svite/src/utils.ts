@@ -18,3 +18,33 @@ export function tryStatSync(file: string) {
     // 不做处理，避免程序读取文件失败而崩溃
   }
 }
+
+
+export function deepMerge<T extends object>(target: T, ...sources: Partial<T>[]): T {
+  for (const source of sources) {
+    if (!source) continue;
+
+    Object.keys(source).forEach(key => {
+      const targetValue = target[key as keyof T];
+      const sourceValue = source[key as keyof T];
+
+      // 仅对非数组的纯对象递归合并
+      if (
+        isObject(targetValue)
+        && isObject(sourceValue)
+        && !Array.isArray(targetValue)
+      ) {
+        deepMerge(targetValue, sourceValue);
+      } else {
+        if (sourceValue !== undefined) {
+          target[key as keyof T] = sourceValue!;
+        }
+      }
+    });
+  }
+  return target;
+}
+
+export function isObject(value: any): value is object {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}

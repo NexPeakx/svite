@@ -5,11 +5,9 @@ const { version: VERSION } = JSON.parse(readFileSync(new URL('../package.json', 
 
 const cli = cac('svite');
 
-function filterValidOptions()
-
 // 全局配置
 cli
-  .option('-m, --mode <mode>', '["development" | "production"] set env mode')
+  .option('-m, --mode <mode>', '[string] set env mode')
 
 // dev 配置
 cli
@@ -20,7 +18,13 @@ cli
     console.log('dev', root, option);
 
     const { createDevServer } = await import('./server')
-    createDevServer({ root, ...option })
+    createDevServer({
+      root,
+      server: {
+        port: option.port,
+      },
+      mode: option.mode
+    })
   })
 
 cli.help()

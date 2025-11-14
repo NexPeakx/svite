@@ -3,9 +3,15 @@ import fs from "node:fs";
 import fsp from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { DEFAULT_CONFIG_FILES } from "./constants";
-import { isFileESM } from "./utils";
+import { isFileESM, deepMerge } from "./utils";
 import { findNearestNodeModules } from "./packages";
 import { build } from "esbuild";
+
+export interface InlineConfig {
+  root?: string,
+  mode?: string,
+  port?: number
+}
 
 export interface ConfigEnv {
   command: "serve" | "build";
@@ -48,29 +54,26 @@ export function defineConfig(config: UserConfigExport): UserConfigExport {
 }
 
 // 解析配置
-export async function resolveConfig(inlineConfig: Object) {
+export async function resolveConfig(inlineConfig: InlineConfig): Promise<UserConfig> {
   const userConfig = await loadConfigFromFiles();
 
-  const resolvedConfig = mergeConfig(
+  return mergeConfig(
     configDefault,
     userConfig,
     inlineConfig,
   )
-
-  return resolvedConfig
 }
 
 function mergeConfig(
   defaultConfig: UserConfig,
   userConfig: UserConfig,
-  inlineConfig: UserConfig,
+  inlineConfig: InlineConfig,
 ) {
-  console.log(
-    "defaultConfig", defaultConfig,
-    "userConfig", userConfig,
-    "inlineConfig", inlineConfig,
-  )
-  return Object.assign(defaultConfig, userConfig, inlineConfig);
+  const base = { ...defaultConfig }
+  const resolvedRoot = inlineConfig.root || defaultConfig.root;
+  const mergedConfig:UserConfig = deepMerge(base, userConfig, inlineConfig)
+  mergedConfig.root = resolvedRoot
+  return mergedConfig
 }
 // 加载本地配置
 async function loadConfigFromFiles(configRoot: string = process.cwd()) {
