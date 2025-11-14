@@ -1,9 +1,10 @@
 import { NextHandleFunction } from "connect";
-import type { Server } from "node:http";
-export function transformHandler(serve: Server): NextHandleFunction {
+import type { DevServer } from "../server";
+export function transformHandler(serve: DevServer): NextHandleFunction {
+
+  console.log('Transform Handler Middleware');
 
   return (req, res, next) => {
-    console.log('Transform Handler Middleware', req.url, req.method);
     next()
   }
 }

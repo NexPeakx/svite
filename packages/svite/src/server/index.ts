@@ -2,9 +2,17 @@ import { createServer } from "node:http";
 import connect from "connect";
 import {
   htmlHandler,
-  transformHandler
+  transformHandler,
+  publicHandler
 } from '../middlewares'
 import { resolveConfig } from "../config";
+import { Server } from "node:http";
+import { UserConfig } from "../config";
+
+export interface DevServer {
+  server: Server,
+  config: UserConfig
+}
 
 export async function createDevServer(inlineCconfig: Object) {
   const config = await resolveConfig(inlineCconfig);
@@ -13,11 +21,18 @@ export async function createDevServer(inlineCconfig: Object) {
 
   let server = createServer(app);
 
-  app.use(transformHandler(server))
+  let devServer: DevServer = {
+    server,
+    config
+  }
+  console.log("devServer", devServer);
+  app.use(publicHandler(devServer))
 
-  app.use(htmlHandler(server));
+  app.use(transformHandler(devServer))
 
-  server.listen(3000, () => {
-    console.log("Dev server running on http://localhost:3000");
+  app.use(htmlHandler(devServer));
+
+  server.listen(config.server?.port, () => {
+    console.log(`Dev server running on http://localhost:${config.server?.port}`);
   });
 }

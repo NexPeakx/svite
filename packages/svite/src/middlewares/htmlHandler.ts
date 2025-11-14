@@ -1,9 +1,9 @@
 import { NextHandleFunction } from "connect";
 import { readFileSync } from "node:fs";
-import { Server } from "node:http";
+import type { DevServer } from "../server";
 import { resolve } from "node:path";
 
-export function htmlHandler(serve: Server): NextHandleFunction {
+export function htmlHandler(serve: DevServer): NextHandleFunction {
   // console.log('HTML Handler Middleware', req.url, req.method);
   // const html = readFileSync(resolve(process.cwd(), 'index.html'), 'utf-8');
   // res.writeHead(200, {
