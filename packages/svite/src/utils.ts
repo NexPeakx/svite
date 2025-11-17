@@ -52,7 +52,7 @@ export function isObject(value: any): value is object {
   return value && typeof value === "object" && !Array.isArray(value);
 }
 
-export function initPublicFiles(dirPath: string): string[] {
+export function initPublicFiles(dirPath: string): Set<string> {
   let fileNames: string[] = [];
 
   function walkDir(currentPath: string, basePath: string = dirPath) {
@@ -76,5 +76,5 @@ export function initPublicFiles(dirPath: string): string[] {
     walkDir(dirPath);
   }
 
-  return fileNames;
+  return new Set(fileNames);
 }

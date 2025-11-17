@@ -29,7 +29,7 @@ export async function createDevServer(inlineCconfig: Object) {
 
   console.log(publicFiles, "all public files");
 
-  app.use(publicHandler(devServer));
+  app.use(publicHandler(devServer, publicFiles));
 
   app.use(transformHandler(devServer));
 
