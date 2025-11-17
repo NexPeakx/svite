@@ -66,7 +66,8 @@ export function initPublicFiles(dirPath: string): string[] {
       });
     } else if (stat.isFile()) {
       const relativePath = path.relative(basePath, currentPath);
-      fileNames.push("/" + relativePath);
+      const normalizedPath = relativePath.replace(/\\/g, "/");
+      fileNames.push("/" + normalizedPath);
     }
   }
 
