@@ -78,3 +78,8 @@ export function initPublicFiles(dirPath: string): Set<string> {
 
   return new Set(fileNames);
 }
+
+const postfixRE = /[?#].*$/
+export function cleanUrl(url: string): string {
+  return url.replace(postfixRE, '')
+}
