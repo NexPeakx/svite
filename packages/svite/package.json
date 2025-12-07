@@ -16,9 +16,12 @@
   },
   "dependencies": {
     "@types/connect": "^3.4.38",
+    "@types/ws": "^8.18.1",
     "cac": "^6.7.14",
+    "chokidar": "^5.0.0",
     "connect": "^3.7.0",
     "esbuild": "^0.25.12",
-    "sirv": "^3.0.2"
+    "sirv": "^3.0.2",
+    "ws": "^8.18.3"
   }
 }

@@ -9,6 +9,5 @@ export default defineConfig((env) => {
       port: 8088,
       host: true,
     },
-    base: "//",
   };
 });
